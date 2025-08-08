@@ -23,7 +23,7 @@ from datetime import datetime, timezone, timedelta
 import calendar, time, threading, json
 import os
 from dotenv import load_dotenv
-
+import numpy as np
 
 
 
@@ -120,6 +120,8 @@ def _trendbars_cb(res):
     daily_bars = list(map(_tb, bars))[-50:]
     ready_event.set()
 
+
+
 def get_ohlc_data(symbol: str, tf: str = "D1", n: int = 10):
     ready_event.clear()
     sid = symbol_name_to_id.get(symbol.upper())
@@ -136,7 +138,46 @@ def get_ohlc_data(symbol: str, tf: str = "D1", n: int = 10):
     )
     client.send(req).addCallbacks(_trendbars_cb, on_error)
     ready_event.wait(10)
-    return daily_bars[-n:]
+
+    candles = daily_bars[-n:]
+    highs = [bar["high"] for bar in candles]
+    lows = [bar["low"] for bar in candles]
+    closes = [bar["close"] for bar in candles]
+
+    # Ensure we have enough for context
+    context_levels = {}
+    if len(candles) >= 2:
+        context_levels = {
+            "today_high": candles[-1]["high"],
+            "today_low": candles[-1]["low"],
+            "prev_day_high": candles[-2]["high"],
+            "prev_day_low": candles[-2]["low"],
+            "range_high_5": max(highs[-5:]),
+            "range_low_5": min(lows[-5:])
+        }
+
+    # Optional HTF trend logic (D1/H4 only)
+    trend_strength = {}
+    if tf in ("D1", "H4") and len(closes) >= 5:
+        x = np.arange(len(closes))
+        slope, intercept = np.polyfit(x, closes, 1)
+        r = np.corrcoef(x, closes)[0, 1]
+        trend_strength = {
+            "slope": float(slope),
+            "correlation": float(r),
+            "confidence": (
+                "Ultra Strong Bullish" if slope > 0.5 and r > 0.9 else
+                "Strong Bearish" if slope < -0.5 and r > 0.9 else
+                "Sideways/Neutral"
+            )
+        }
+
+    return {
+        "candles": candles,
+        "context": context_levels,
+        "trend": trend_strength
+    }
+
 
 # ── reconcile helpers ──────────────────────────────────────────────────────
 open_positions, pos_ready = [], threading.Event()
