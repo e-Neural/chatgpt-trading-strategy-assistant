@@ -37,16 +37,19 @@ This framework integrates the **cTrader Open API**, a **FastAPI backend**, and *
 
 ```bash
 chatgpt-smc-trading-assistant/
-├── app.py                  # FastAPI backend
-├── ctrader_client.py       # Twisted client for cTrader Open API
-├── Dockerfile              # Build config for backend container
-├── docker-compose.yml      # Launches backend + ngrok
-├── requirements.txt        # Python dependencies
-├── .env                    # API credentials (not committed) - see .env.example
-├── gpt_instructions.md     # GPT instruction template
-├── gpt-schema.yaml         # GPT Action schema (OpenAPI YAML)
-├── docker_usage_guide.md   # Step-by-step guide for using Docker and Docker Compose with the project
-└── README.md               # Project overview and usage
+├── app.py                  # FastAPI app (exposes /analyze, /place-order, etc.)
+├── ctrader_client.py       # cTrader Open API Twisted client
+├── analysis/               # SMC detection logic (CHOCH, BOS, OB, FVG, sessions, etc.)
+├── charts/                 # Plotly/lightweight-charts helpers (optional)
+├── gpt_instructions.md     # Strategy prompt template for your Custom GPT
+├── gpt-schema.yaml         # OpenAPI schema used by GPT Actions
+├── docker-compose.yml      # Backend-only compose (optional)
+├── Dockerfile              # Backend image
+├── requirements.txt        # Python deps
+├── .env.example            # Template for env vars
+├── docker_usage_guide.md   # (Optional) Docker notes
+└── README.md
+
 ```
 
 ### 📌 Strategy Customization – Create Your Own Logic
@@ -82,9 +85,13 @@ This assistant enables end-to-end automation of Smart Money Concepts trading:
 
 - Connects to **cTrader Open API** via Twisted
 - Exposes endpoints for:
-  - `/fetch-data` → fetch OHLC data from cTrader
+  - `/analyze` → complete SMC analysis pipeline (HTF bias, MTF zones, LTF entry)
+  - `/fetch-data` → raw OHLC data per symbol/timeframe
+  - `/tag-sessions` → tag M15/M5 candles with Asia/London/NY/PostNY
+  - `/session-levels` → extract highs/lows by session (e.g. NY high/low)
   - `/place-order` → execute market/pending orders
-  - `/open-positions` → list live trades
+  - `/open-positions` → list active trades
+  - `/pending-orders` → list limit/stop orders
   - `/journal-entry` → log trades to Notion
 - Runs in Docker with automatic ngrok tunneling
 
@@ -96,6 +103,22 @@ This assistant enables end-to-end automation of Smart Money Concepts trading:
   - 📰 Macro event checking from Investing.com / ForexFactory
   - 🧾 Trade journaling with full setup summary
   - 📈 Live trade placement
+
+
+### 🔬 New! Full Market Structure Analyzer (`/analyze`)
+
+Instead of fetching candles and interpreting them manually, the `/analyze` endpoint automates full market analysis using Smart Money Concepts. It returns:
+
+- HTF bias (via D1 structure)
+- MTF OBs and FVGs (H4/H1)
+- LTF entry confirmation (M15/M5 sweep, candle, etc.)
+- Session high/low analysis (Asia, London, NY)
+- Previous day high/low
+- Macro news integration
+- SMC checklist status (CHOCH, OB, FVG, Sweep, Candle)
+
+This powers most of ChatGPT’s decision-making.
+
 
 ---
 
@@ -279,6 +302,22 @@ Posts the confirmed trades, with checklist, news context, and chart links into N
 ![Notion Entry](images/notion-journal.png)
 
 
+---
+
+---
+
+## 🔌 API Endpoints Reference
+
+| Endpoint            | Purpose                                    |
+|---------------------|--------------------------------------------|
+| `/analyze`          | Full SMC analysis using all logic modules  |
+| `/fetch-data`       | Get raw OHLC data                          |
+| `/tag-sessions`     | Tag each candle with Asia/London/NY label  |
+| `/session-levels`   | Get highs/lows for each trading session    |
+| `/place-order`      | Submit a trade via cTrader OpenAPI         |
+| `/open-positions`   | View currently open positions              |
+| `/pending-orders`   | View pending (limit/stop) orders           |
+| `/journal-entry`    | Save a trade with notes/checklist to Notion |
 
 ---
 

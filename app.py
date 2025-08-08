@@ -23,6 +23,22 @@ from fastapi import  APIRouter
 from ctrader_client import is_forex_symbol
 import os
 from dotenv import load_dotenv
+from collections import defaultdict
+from analysis import (
+    detect_order_block,
+    detect_fvg,
+    detect_sweep,
+    detect_bullish_or_bearish_engulfing,
+    detect_trend_bias,
+    detect_ltf_entry,
+    detect_choch
+)
+from charts import generate_smc_chart
+from analysis import detect_choch
+from pydantic import BaseModel
+from analysis import tag_sessions_local, compute_session_levels  # Add this
+from fastapi.responses import Response
+
 
 
 app = FastAPI()
@@ -73,13 +89,7 @@ def label_session(utc_iso_time: str) -> str:
 
 
 
-class Candle(BaseModel):
-    time: str
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: int
+
 
 class CandleList(BaseModel):
     candles: List[Candle]
@@ -94,6 +104,33 @@ async def tag_sessions(data: CandleList):
             SessionCandle(**c.dict(), session=label_session(c.time))
             for c in data.candles
         ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+@app.post("/session-levels")
+async def session_levels(data: CandleList):
+    try:
+        # Step 1: Assign sessions
+        session_groups = defaultdict(list)
+        for c in data.candles:
+            session = label_session(c.time)
+            session_groups[session].append(c)
+
+        # Step 2: Compute session highs/lows
+        session_levels = {}
+        for session, candles in session_groups.items():
+            highs = [c.high for c in candles]
+            lows = [c.low for c in candles]
+            session_levels[session] = {
+                "high": max(highs) if highs else None,
+                "low": min(lows) if lows else None
+            }
+
+        return session_levels
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -189,16 +226,20 @@ async def fetch_data(req: FetchDataRequest):
                 "D1": 300, "W1": 100
             }.get(tf, 500)
 
-        data = get_ohlc_data(req.symbol, req.timeframe, req.num_bars)
+        result = get_ohlc_data(req.symbol, req.timeframe, req.num_bars)
         return {
             "symbol": req.symbol,
             "timeframe": req.timeframe,
-            "ohlc": data
+            "ohlc": result["candles"],
+            "context": result.get("context", {}),
+            "trend": result.get("trend", {})
         }
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # 📊 Open Positions
 @app.get("/open-positions")
@@ -279,6 +320,152 @@ async def pending_orders():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+class LTFEntry(BaseModel):
+    entry_type: Optional[str]
+    entry_price: Optional[float]
+    stop_loss: Optional[float]
+    take_profit: Optional[float]
+    notes: Optional[str] = ""
+
+
+
+class AnalyzeRequest(BaseModel):
+    symbol: str
+
+class MTFZones(BaseModel):
+    H4_OB: Optional[dict]
+    H1_OB: Optional[dict]
+    H4_FVG: Optional[dict]
+    H1_FVG: Optional[dict]
+
+class Checklist(BaseModel):
+    CHOCH: Optional[dict]
+    OB: Optional[dict]
+    FVG: Optional[dict]
+    Sweep: Optional[dict]
+    Candle: Optional[dict]
+
+class AnalyzeResponse(BaseModel):
+    HTF_Bias: str
+    MTF_Zones: MTFZones
+    LTF_Entry: Optional[LTFEntry]
+    Previous_Day_High: float
+    Previous_Day_Low: float
+    Session_Levels: dict
+    Checklist: Checklist
+    News: str
+
+
+@app.post("/analyze", response_model=AnalyzeResponse)
+async def analyze(req: AnalyzeRequest):
+    try:
+        symbol = req.symbol
+        timeframes = ["D1", "H4", "H1", "M15", "M5"]
+        data = {}
+
+        # Fetch and store the full result (not just candles)
+        for tf in timeframes:
+            result = get_ohlc_data(symbol, tf, n=100)
+            if not isinstance(result, dict) or "candles" not in result:
+                raise HTTPException(status_code=500, detail=f"Failed to fetch candles for {tf}")
+            data[tf] = result
+
+        # Extract candles from each timeframe
+        candles = {tf: data[tf]["candles"] for tf in timeframes}
+
+        # Use local versions
+        tagged_m15 = tag_sessions_local(candles["M15"])
+        pdh = candles["D1"][-2]["high"]
+        pdl = candles["D1"][-2]["low"]
+        session_levels = compute_session_levels(tagged_m15)
+
+        htf_bias = detect_trend_bias(candles["D1"])
+        mtf_zones = {
+            "H4_OB": detect_order_block(candles["H4"]),
+            "H1_OB": detect_order_block(candles["H1"]),
+            "H4_FVG": detect_fvg(candles["H4"]),
+            "H1_FVG": detect_fvg(candles["H1"]),
+        }
+
+        ltf_entry = detect_ltf_entry(tagged_m15, candles["M5"], pdh, pdl, session_levels)
+
+        checklist = {
+            "CHOCH": detect_choch(candles["M5"]),
+            "OB": detect_order_block(candles["M15"]),
+            "FVG": detect_fvg(candles["M15"]),
+            "Sweep": detect_sweep(tagged_m15, pdh, pdl, session_levels),
+            "Candle": detect_bullish_or_bearish_engulfing(candles["M5"]),
+        }
+
+        news = ""  # Placeholder
+
+        try:
+            print("✅ HTF Bias:", htf_bias)
+            print("✅ MTF Zones:", mtf_zones)
+            print("✅ LTF Entry Raw:", repr(ltf_entry))
+            print("✅ Checklist Raw:", repr(checklist))
+            
+            response = AnalyzeResponse(
+                HTF_Bias=htf_bias,
+                MTF_Zones=MTFZones(**mtf_zones),
+                LTF_Entry=LTFEntry(**ltf_entry),
+                Previous_Day_High=pdh,
+                Previous_Day_Low=pdl,
+                Session_Levels=session_levels,
+                Checklist=Checklist(**checklist),
+                News=news,
+            )
+            print("✅ Final response created.")
+            return response
+        except Exception as e:
+            print("🔥 Exception while constructing AnalyzeResponse:", e)
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+@app.post("/chart")
+async def chart(
+    symbol: str,
+    timeframe: str = "M15",
+    entry: Optional[float] = None,
+    stop_loss: Optional[float] = None,
+    take_profit: Optional[float] = None
+):
+    try:
+        candles_data = get_ohlc_data(symbol, timeframe, n=100)
+        candles = candles_data["candles"]
+
+        # Detect structural SMC elements
+        ob = detect_order_block(candles)
+        fvg = detect_fvg(candles)
+        choch = detect_choch(candles)
+
+        highlights = {
+            "order_block": ob,
+            "fvg": fvg,
+            "choch": choch,
+            "entry": entry,
+            "stop_loss": stop_loss,
+            "take_profit": take_profit
+        }
+
+        image_bytes = generate_smc_chart(
+            candles,
+            title=f"{symbol} SMC Chart - {timeframe}",
+            highlights=highlights
+        )
+
+        return Response(content=image_bytes, media_type="image/png")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

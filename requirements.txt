@@ -5,3 +5,5 @@ ctrader-open-api
 twisted
 service_identity
 python-dotenv
+numpy
+plotly

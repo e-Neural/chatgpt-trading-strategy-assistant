@@ -3,7 +3,7 @@ info:
   title: Ctrader OpenApi Market Data  
   version: 1.1.2
 servers:
-  - url: https://4ac7e6f60b00.ngrok-free.app
+  - url: https://01074754b218.ngrok-free.app
 
 paths:
   /fetch-data:
@@ -339,3 +339,124 @@ paths:
                           type: string
         '500':
           description: Failed to retrieve pending orders
+
+
+  /session-levels:
+    post:
+      operationId: getSessionLevels
+      summary: Get session highs and lows from OHLC data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                candles:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - time
+                      - open
+                      - high
+                      - low
+                      - close
+                      - volume
+                      - session
+                    properties:
+                      time:
+                        type: string
+                        format: date-time
+                      open:
+                        type: number
+                      high:
+                        type: number
+                      low:
+                        type: number
+                      close:
+                        type: number
+                      volume:
+                        type: integer
+                      session:
+                        type: string
+                        enum: [Asia, London, NewYork, PostNY, Unknown]
+      responses:
+        '200':
+          description: Session-level highs and lows
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Asia:
+                    type: object
+                    properties:
+                      high:
+                        type: number
+                      low:
+                        type: number
+                  London:
+                    type: object
+                    properties:
+                      high:
+                        type: number
+                      low:
+                        type: number
+                  NewYork:
+                    type: object
+                    properties:
+                      high:
+                        type: number
+                      low:
+                        type: number
+                  PostNY:
+                    type: object
+                    properties:
+                      high:
+                        type: number
+                      low:
+                        type: number
+        '500':
+          description: Error processing session levels
+
+  /analyze:
+    post:
+      operationId: analyze
+      summary: Run full SMC analysis on a symbol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                symbol:
+                  type: string
+                  description: Symbol to analyze (e.g., "EURUSD")
+              required:
+                - symbol
+      responses:
+        '200':
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  HTF Bias:
+                    type: string
+                  MTF Zones:
+                    type: object
+                  LTF Entry:
+                    type: string
+                  Previous Day High:
+                    type: number
+                  Previous Day Low:
+                    type: number
+                  Session Levels:
+                    type: object
+                  Checklist:
+                    type: object
+                  News:
+                    type: string
