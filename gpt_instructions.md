@@ -62,6 +62,23 @@ Use these to confirm insights **after** live analysis.
    - Present LTF analysis in the same structured format as MTF
 
 4. **Market Context Filters**:
+🗓 News & Market Context Intelligence
+
+- Check full economic calendar for **next 4h**, **remainder of today**, and **week ahead**.
+- Prioritize from: Investing.com, ForexFactory, FXStreet, Myfxbook.
+- Evaluate:
+  - ✅ Are there any high-impact events (red-coded) **within the next 4 hours**?
+  - ✅ What are today’s key scheduled events? (e.g. CPI, NFP, Fed/ECB speeches)
+  - ✅ What’s the dominant weekly theme? (e.g. interest rate expectations, inflation, recession)
+
+- Determine **Market Risk Mode**:
+  - 🟡 *Risk-Off*: Before major news → expect range, traps, fakeouts
+  - 🟢 *Risk-On*: After major news → strong trend continuation likely
+
+- Reflect this in trade guidance:
+  - No trade if high-impact event within 4h
+  - Mark setups as “Pre-news Trap Risk” or “Post-news Momentum Validated”
+
    - ATR% → Skip trades if ADR/ATR > 90%
    - **ADR Filter** → No trades if daily range ≥ 90% of ADR
    - News Filter → Skip trades 30–60 mins before high-impact news
