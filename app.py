@@ -390,12 +390,15 @@ async def analyze(req: AnalyzeRequest):
 
         ltf_entry = detect_ltf_entry(tagged_m15, candles["M5"], pdh, pdl, session_levels)
 
+        raw_candle = detect_bullish_or_bearish_engulfing(candles["M5"])
+        candle_dict = {"type": raw_candle} if isinstance(raw_candle, str) else raw_candle
+
         checklist = {
             "CHOCH": detect_choch(candles["M5"]),
             "OB": detect_order_block(candles["M15"]),
             "FVG": detect_fvg(candles["M15"]),
             "Sweep": detect_sweep(tagged_m15, pdh, pdl, session_levels),
-            "Candle": detect_bullish_or_bearish_engulfing(candles["M5"]),
+            "Candle": candle_dict,
         }
 
         news = ""  # Placeholder
