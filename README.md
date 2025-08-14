@@ -337,40 +337,23 @@ Would you also like to log this trade in your trading journal?
 
 ---
 
-Talked to chatgpt-trading-strategy-assistant.onrender.com
 
-📝 Trade Journal Entry Logged Successfully
+## 📝 Trade Journal – EURUSD
 
-Your EURUSD swing trade setup has been fully recorded:
-- Buy Limit @ 1.1702
-- Stop Loss @ 1.1696
-- Take Profit @ 1.1729
-- Session: London
-- Confluence: OB + FVG + Sweep
-- News: No high-impact events
-
-Let me know if you want real-time monitoring or alerts when the order is filled or TP/SL levels are hit.
-
-
-
----
-
-### 📟 Suggested Trade Journal Entry
-
-| Field            | Value                                         |
-| ---------------- | --------------------------------------------- |
-| **Title**        | 2025-07-25 EURUSD NY                          |
-| **Symbol**       | EURUSD                                        |
-| **Session**      | NY                                            |
-| **HTF Bias**     | Bullish                                       |
-| **Entry Type**   | FVG Retest + OB                               |
-| **Entry Price**  | 1.17460                                       |
-| **Stop Loss**    | 1.17280                                       |
-| **Target Price** | 1.18250                                       |
-| **Order Type**   | Buy Limit                                     |
-| **Note**         | LTF liquidity sweep + FVG fill inside H4 OB   |
-| **Checklist**    | CHOCH ✅, OB ✅, FVG ✅, Sweep ✅, Candle Conf. ✅ |
-| **News Events**  | US Core PCE release tomorrow (USD)            |
+| Field           | Value                                                  |
+|----------------|--------------------------------------------------------|
+| **Title**       | EURUSD – PDH Sweep into M5 OB (Buy Setup)              |
+| **Symbol**      | EURUSD                                                 |
+| **Session**     | London                                                 |
+| **HTF Bias**    | Bullish                                                |
+| **Entry Type**  | Limit                                                  |
+| **Entry**       | 1.1702                                                 |
+| **Stop Loss**   | 1.1696                                                 |
+| **Target Price**| 1.1729                                                 |
+| **Order Type**  | Limit                                                  |
+| **Note**        | LTF bullish OB + FVG confluence after PDH sweep        |
+| **Checklist**   | OB ✅ | FVG ✅ | Sweep ✅ | CHOCH ❌ | Candle ❌         |
+| **News Events** | None                                                  |
 
 
 
