@@ -214,6 +214,7 @@ GPT Action Schema Integration
 
 ## Example Outputs
 
+Analyze EURUSD for a swing trade setup
 
 ### 🔍 **EURUSD – Full Top-Down SMC Swing Trade Analysis**
 
