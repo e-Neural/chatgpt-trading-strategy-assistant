@@ -279,10 +279,11 @@ def execute_trade(order: PlaceOrderRequest):
             order_type=order.order_type,
             side=order.direction,
             volume=volume_raw,
-            price=order.entry_price,
+            price=order.entry_price if order.order_type != "MARKET" else None,
             stop_loss=order.stop_loss,
             take_profit=order.take_profit
         )
+
 
 
 
