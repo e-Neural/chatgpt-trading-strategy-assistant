@@ -4,30 +4,87 @@ A fully automated and extensible trading assistant powered by ChatGPT — capabl
 
 This framework integrates the **cTrader Open API**, a **FastAPI backend**, and **Docker**, delivering a seamless end-to-end trading pipeline — from market analysis to order placement — all controlled through conversation.
 
-🧠 **Currently configured to run a Smart Money Concepts (SMC)** strategy out of the box.  
+🧐 **Currently configured to run a Smart Money Concepts (SMC)** strategy out of the box.
 🛠️ You can easily adapt it to **any strategy** by modifying the ChatGPT instructions.
 
 ---
 
 ## 🔑 Key Features
 
-- **Strategy-Agnostic Design**  
+* **Strategy-Agnostic Design**
   Define your own rules — just update the ChatGPT prompt instructions, and the assistant adapts accordingly.
 
-- **Advanced SMC Market Analysis**  
+* **Advanced SMC Market Analysis**
   Detects CHOCH, BOS, FVGs, OBs, liquidity sweeps, and premium/discount zones.
 
-- **Trade Journaling**  
+* **Trade Journaling**
   Automatically logs trades to Notion with structured metadata, SMC checklists, and chart snapshots.
 
-- **Order Execution**  
+* **Order Execution**
   Places market, limit, and stop orders in real time using plain English.
 
-- **Multilingual Support**  
+* **Multilingual Support**
   Works in English, French, Spanish, and any language ChatGPT understands.
 
-- **Live Market Sync**  
+* **Live Market Sync**
   Fetches price data and executes logic live through the cTrader Open API.
+
+---
+
+## 🧹 Top-Down SMC Flow (Full Sequence)
+
+> ✅ The assistant follows strict Smart Money Concepts (SMC) methodology using a top-down flow:
+> **HTF (D1) → MTF (H4/H1) → LTF (M15/M5)** — all layers are analyzed in sequence for every setup.
+
+---
+
+## ✨ Trade Confluence Scoring System
+
+| Element               | Weight    |
+| --------------------- | --------- |
+| CHOCH                 | 25%       |
+| Order Block (OB)      | 20%       |
+| Fair Value Gap (FVG)  | 15%       |
+| Liquidity Sweep       | 20%       |
+| Candle Confirmation   | 20%       |
+| **Required to Enter** | **≥ 70%** |
+
+---
+
+## 🛡️ Risk Management Filters
+
+The assistant will **skip** trade setups when any of the following are true:
+
+* 🔺 **ADR ≥ 90%**: Daily move exhausted
+* 🕐 **High-impact news** in next 30–60 minutes
+* 🔚 **End-of-day** (last 10% of ADR range)
+* 🔴 **Counter-trend** unless confluence ≥ 80%
+
+---
+
+## 📃 Journaling Logic
+
+> 🧾 When a valid setup is found, the assistant auto-posts to `/journal-entry`, logging:
+
+* Full metadata (symbol, session, entry, SL, TP, confluence score)
+* Checklist (CHOCH, OB, FVG, Sweep, Candle)
+* News and session context
+* Optional chart snapshot
+
+---
+
+## 🖋️ Natural Language Prompts (Examples)
+
+| Prompt                            | Action Triggered               |
+| --------------------------------- | ------------------------------ |
+| Analyze EURUSD using SMC          | `/analyze` full structure scan |
+| What’s the HTF bias on NAS100?    | D1-only HTF analysis           |
+| Has NY session swept London high? | Liquidity mapping check        |
+| Reevaluate my GBPUSD long         | LTF/MTF revalidation           |
+| Place buy limit on EURUSD         | Places `/place-order` limit    |
+| Log this NAS100 trade             | Saves journal to Notion        |
+
+---
 
 
 
@@ -361,7 +418,7 @@ Would you also like to log this trade in your trading journal?
 Would you like a visual SMC chart for this setup?
 
 
-### 🧠 Trade Analysis Output
+### 🧠 Trade Analysis Output Chart
 Live OHLC analysis, SMC element detection, and structured journal suggestion.
 
 ![ChatGPT Trade Analysis](images/trade-analysis.png)
