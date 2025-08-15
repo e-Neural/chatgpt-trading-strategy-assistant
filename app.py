@@ -376,7 +376,6 @@ async def analyze(req: AnalyzeRequest):
 
         for tf in timeframes:
             result = get_ohlc_data(symbol, tf, n=bar_depth.get(tf, 100))
-
             if not isinstance(result, dict) or "candles" not in result:
                 raise HTTPException(status_code=500, detail=f"Failed to fetch candles for {tf}")
             data[tf] = result
@@ -390,22 +389,38 @@ async def analyze(req: AnalyzeRequest):
         pdl = candles["D1"][-2]["low"]
         session_levels = compute_session_levels(tagged_m15)
 
+        # High Timeframe Bias
         htf_bias = detect_trend_bias(candles["D1"])
+
+        # Detect macro + minor OB for H4 & H1
+        h4_ob_data = detect_order_block(candles["H4"], lookback=200, macro_threshold=100)
+        h1_ob_data = detect_order_block(candles["H1"], lookback=200, macro_threshold=100)
+
         mtf_zones = {
-            "H4_OB": detect_order_block(candles["H4"]),
-            "H1_OB": detect_order_block(candles["H1"]),
+            "H4_Macro_OB": h4_ob_data.get("macro") if h4_ob_data else None,
+            "H4_Minor_OB": h4_ob_data.get("minor") if h4_ob_data else None,
+            "H1_Macro_OB": h1_ob_data.get("macro") if h1_ob_data else None,
+            "H1_Minor_OB": h1_ob_data.get("minor") if h1_ob_data else None,
             "H4_FVG": detect_fvg(candles["H4"]),
             "H1_FVG": detect_fvg(candles["H1"]),
         }
 
+        # LTF entry detection
         ltf_entry = detect_ltf_entry(tagged_m15, candles["M5"], pdh, pdl, session_levels)
 
+        # Candle pattern detection
         raw_candle = detect_bullish_or_bearish_engulfing(candles["M5"])
         candle_dict = {"type": raw_candle} if isinstance(raw_candle, str) else raw_candle
 
+        # Detect macro + minor OB & CHOCH for checklist
+        m15_ob_data = detect_order_block(candles["M15"], lookback=200, macro_threshold=100)
+        m5_choch_data = detect_choch(candles["M5"], macro_threshold=100)
+
         checklist = {
-            "CHOCH": detect_choch(candles["M5"]),
-            "OB": detect_order_block(candles["M15"]),
+            "Macro_CHOCH": m5_choch_data.get("macro") if m5_choch_data else None,
+            "Minor_CHOCH": m5_choch_data.get("minor") if m5_choch_data else None,
+            "Macro_OB": m15_ob_data.get("macro") if m15_ob_data else None,
+            "Minor_OB": m15_ob_data.get("minor") if m15_ob_data else None,
             "FVG": detect_fvg(candles["M15"]),
             "Sweep": detect_sweep(tagged_m15, pdh, pdl, session_levels),
             "Candle": candle_dict,
@@ -418,7 +433,7 @@ async def analyze(req: AnalyzeRequest):
             print("✅ MTF Zones:", mtf_zones)
             print("✅ LTF Entry Raw:", repr(ltf_entry))
             print("✅ Checklist Raw:", repr(checklist))
-            
+
             response = AnalyzeResponse(
                 HTF_Bias=htf_bias,
                 MTF_Zones=MTFZones(**mtf_zones),
@@ -435,10 +450,9 @@ async def analyze(req: AnalyzeRequest):
             print("🔥 Exception while constructing AnalyzeResponse:", e)
             raise HTTPException(status_code=500, detail=str(e))
 
-
-        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 

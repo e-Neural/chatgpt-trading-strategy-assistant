@@ -3,7 +3,7 @@ info:
   title: Ctrader OpenApi Market Data  
   version: 1.1.2
 servers:
-  - url: https://01074754b218.ngrok-free.app
+  - url: https://chatgpt-trading-strategy-assistant.onrender.com
 
 paths:
   /fetch-data:
@@ -224,6 +224,7 @@ paths:
         '500':
           description: Server error during order execution
 
+
   /tag-sessions:
     post:
       operationId: tagSessions
@@ -420,43 +421,111 @@ paths:
         '500':
           description: Error processing session levels
 
-  /analyze:
-    post:
-      operationId: analyze
-      summary: Run full SMC analysis on a symbol
-      requestBody:
-        required: true
+/analyze:
+  post:
+    operationId: analyze
+    summary: Run full SMC analysis on a symbol
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              symbol:
+                type: string
+                description: Symbol to analyze (e.g., "EURUSD")
+            required:
+              - symbol
+    responses:
+      '200':
+        description: Analysis result
         content:
           application/json:
             schema:
               type: object
               properties:
-                symbol:
+                HTF_Bias:
                   type: string
-                  description: Symbol to analyze (e.g., "EURUSD")
-              required:
-                - symbol
-      responses:
-        '200':
-          description: Analysis result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  HTF Bias:
-                    type: string
-                  MTF Zones:
-                    type: object
-                  LTF Entry:
-                    type: string
-                  Previous Day High:
-                    type: number
-                  Previous Day Low:
-                    type: number
-                  Session Levels:
-                    type: object
-                  Checklist:
-                    type: object
-                  News:
-                    type: string
+                  description: Macro trend direction from D1 timeframe
+                MTF_Zones:
+                  type: object
+                  properties:
+                    H4_OB:
+                      type: object
+                      properties:
+                        macro:
+                          type: object
+                          nullable: true
+                        minor:
+                          type: object
+                          nullable: true
+                    H1_OB:
+                      type: object
+                      properties:
+                        macro:
+                          type: object
+                          nullable: true
+                        minor:
+                          type: object
+                          nullable: true
+                    H4_FVG:
+                      type: object
+                      nullable: true
+                    H1_FVG:
+                      type: object
+                      nullable: true
+                LTF_Entry:
+                  type: object
+                  properties:
+                    entry_type:
+                      type: string
+                    entry_price:
+                      type: number
+                      nullable: true
+                    stop_loss:
+                      type: number
+                      nullable: true
+                    take_profit:
+                      type: number
+                      nullable: true
+                    notes:
+                      type: string
+                Previous_Day_High:
+                  type: number
+                Previous_Day_Low:
+                  type: number
+                Session_Levels:
+                  type: object
+                Checklist:
+                  type: object
+                  properties:
+                    CHOCH:
+                      type: object
+                      properties:
+                        macro:
+                          type: object
+                          nullable: true
+                        minor:
+                          type: object
+                          nullable: true
+                    OB:
+                      type: object
+                      properties:
+                        macro:
+                          type: object
+                          nullable: true
+                        minor:
+                          type: object
+                          nullable: true
+                    FVG:
+                      type: object
+                      nullable: true
+                    Sweep:
+                      type: object
+                    Candle:
+                      type: object
+                      nullable: true
+                News:
+                  type: string
+
