@@ -366,8 +366,17 @@ async def analyze(req: AnalyzeRequest):
         data = {}
 
         # Fetch and store the full result (not just candles)
+        bar_depth = {
+            "D1": 750,
+            "H4": 1200,
+            "H1": 1200,
+            "M15": 500,
+            "M5": 300
+        }
+
         for tf in timeframes:
-            result = get_ohlc_data(symbol, tf, n=100)
+            result = get_ohlc_data(symbol, tf, n=bar_depth.get(tf, 100))
+
             if not isinstance(result, dict) or "candles" not in result:
                 raise HTTPException(status_code=500, detail=f"Failed to fetch candles for {tf}")
             data[tf] = result

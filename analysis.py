@@ -41,40 +41,55 @@ def compute_session_levels(candles):
     return session_levels
 
 
-def detect_order_block(candles: list, lookback: int = 50):
+def detect_order_block(candles: list, lookback: int = 200, macro_threshold: int = 100) -> Optional[dict]:
     """
-    Detect the most recent bullish or bearish order block based on engulfing structure.
-
-    Args:
-        candles: List of OHLC dictionaries
-        lookback: How many candles back to analyze
-
-    Returns:
-        Dict with order block type and level or None
+    Detects the most recent macro and minor order blocks.
+    
+    macro_threshold = how many bars back defines 'macro' vs 'minor'
     """
+    macro_ob = None
+    minor_ob = None
+
     for i in reversed(range(1, min(lookback, len(candles) - 1))):
         prev = candles[i - 1]
         curr = candles[i]
 
-        # Bullish order block: last down candle before strong up close
+        # Bullish OB
         if prev["close"] < prev["open"] and curr["close"] > curr["open"] and curr["close"] > prev["high"]:
-            return {
+            ob = {
                 "type": "bullish",
                 "low": prev["low"],
                 "high": prev["high"],
-                "time": prev["time"]
+                "time": prev["time"],
+                "label": "macro" if i > macro_threshold else "minor"
             }
+            if ob["label"] == "macro" and macro_ob is None:
+                macro_ob = ob
+            elif ob["label"] == "minor" and minor_ob is None:
+                minor_ob = ob
 
-        # Bearish order block: last up candle before strong down close
+        # Bearish OB
         if prev["close"] > prev["open"] and curr["close"] < curr["open"] and curr["close"] < prev["low"]:
-            return {
+            ob = {
                 "type": "bearish",
                 "low": prev["low"],
                 "high": prev["high"],
-                "time": prev["time"]
+                "time": prev["time"],
+                "label": "macro" if i > macro_threshold else "minor"
             }
+            if ob["label"] == "macro" and macro_ob is None:
+                macro_ob = ob
+            elif ob["label"] == "minor" and minor_ob is None:
+                minor_ob = ob
 
+        if macro_ob and minor_ob:
+            break
+
+    # Return both if available
+    if macro_ob or minor_ob:
+        return {"macro": macro_ob, "minor": minor_ob}
     return None
+
 
 def detect_fvg(candles: list, lookback: int = 50):
     """
@@ -199,14 +214,32 @@ def detect_ltf_entry(m15: list, m5: list, pdh: float, pdl: float, session_levels
     }
 
 
+def detect_choch(candles: list, macro_threshold: int = 100) -> Optional[dict]:
+    """
+    Detect both macro and minor CHOCHs based on bar index.
+    """
+    macro_choch = None
+    minor_choch = None
 
-def detect_choch(candles: list):
-    if len(candles) < 2:
-        return None
-    prev = candles[-2]
-    curr = candles[-1]
-    if curr["high"] > prev["high"] and curr["low"] < prev["low"]:
-        return "choch_detected"
+    for i in reversed(range(1, len(candles))):
+        prev = candles[i - 1]
+        curr = candles[i]
+
+        if curr["high"] > prev["high"] and curr["low"] < prev["low"]:
+            choch_data = {
+                "time": curr["time"],
+                "label": "macro" if i > macro_threshold else "minor"
+            }
+            if choch_data["label"] == "macro" and macro_choch is None:
+                macro_choch = choch_data
+            elif choch_data["label"] == "minor" and minor_choch is None:
+                minor_choch = choch_data
+
+        if macro_choch and minor_choch:
+            break
+
+    if macro_choch or minor_choch:
+        return {"macro": macro_choch, "minor": minor_choch}
     return None
 
 
