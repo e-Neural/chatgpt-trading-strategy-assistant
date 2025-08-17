@@ -335,10 +335,13 @@ class AnalyzeRequest(BaseModel):
     symbol: str
 
 class MTFZones(BaseModel):
-    H4_OB: Optional[dict]
-    H1_OB: Optional[dict]
-    H4_FVG: Optional[dict]
-    H1_FVG: Optional[dict]
+    H4_Macro_OB: Optional[dict] = None
+    H4_Minor_OB: Optional[dict] = None
+    H1_Macro_OB: Optional[dict] = None
+    H1_Minor_OB: Optional[dict] = None
+    H4_FVG: Optional[dict] = None
+    H1_FVG: Optional[dict] = None
+
 
 class Checklist(BaseModel):
     CHOCH: Optional[dict]
