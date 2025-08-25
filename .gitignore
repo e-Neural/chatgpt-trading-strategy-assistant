@@ -55,3 +55,6 @@ logs/
 # Others
 *.bak
 *.swp
+
+# Developer notes
+NOTES.md

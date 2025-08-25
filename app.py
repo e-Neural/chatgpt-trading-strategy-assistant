@@ -157,6 +157,8 @@ class JournalEntry(BaseModel):
     checklist: str = ""
     news_events: str = ""
     chart_url: str = ""
+    status: Optional[str] = "Pending"  # 👈 Default to Pending if not specified
+
 
 # 📤 Trade Execution Schema
 class PlaceOrderRequest(BaseModel):
@@ -187,6 +189,9 @@ def health():
 @app.post("/journal-entry")
 async def journal_entry(entry: JournalEntry):
     try:
+        # 👇 Add this line before building properties
+        status = "Open" if entry.order_type.upper() == "MARKET" else "Pending"
+
         properties = {
             "Title": {"title": [{"text": {"content": entry.title}}]},
             "Symbol": {"rich_text": [{"text": {"content": entry.symbol}}]},
@@ -197,6 +202,8 @@ async def journal_entry(entry: JournalEntry):
             "Stop Loss": {"number": entry.stop_loss},
             "Target Price": {"number": entry.target_price},
             "Order Type": {"rich_text": [{"text": {"content": entry.order_type}}]},
+            # 👇 Use dynamic status here
+            "Status": {"rich_text": [{"text": {"content": status}}]},
             "Note": {"rich_text": [{"text": {"content": entry.note}}]},
             "Checklist": {"rich_text": [{"text": {"content": entry.checklist}}]},
             "News & Events": {"rich_text": [{"text": {"content": entry.news_events}}]},

@@ -189,18 +189,22 @@ For each, specify:
 
 At bottom of analysis, suggest journal entry if setup found:
 POST `/journal-entry` with:
+* **Title**
+* **Symbol**
+* **Session**
+* **HTF bias**
+* **Entry type**
+* **Entry, SL, TP**
+* **Order type**
+* **Note**
+* **Checklist** (**macro + minor**)
+* **News events**
+* **Chart URL**
+* **Status** → *(auto-assigned based on order type)*:
+  * `"Open"` if order type is `MARKET`
+  * `"Pending"` if order type is `LIMIT` or `STOP`
+  * Update manually to `"Completed"` once trade is closed in Notion
 
-* Title
-* Symbol
-* Session
-* HTF bias
-* Entry type
-* Entry, SL, TP
-* Order type
-* Note
-* Checklist (**macro + minor**)
-* News events
-* Chart URL
 
 ---
 
@@ -223,4 +227,3 @@ Reassess macro + minor structure vs. original bias and recommend Hold, BE move, 
 * Avoid trades in final 10% of ADR unless strong sweep setup.
 * Avoid trades within 60 mins of high-impact news.
 * Track trades monthly to refine SL/TP placement.
-

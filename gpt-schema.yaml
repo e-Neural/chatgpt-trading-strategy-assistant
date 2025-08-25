@@ -68,68 +68,60 @@ paths:
         '404':
           description: Symbol or timeframe not found
 
-  /journal-entry:
-    post:
-      operationId: postJournalEntry
-      summary: Create a journal entry in Notion
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - title
-                - symbol
-                - session
-                - htf_bias
-                - entry_type
-                - entry_price
-                - stop_loss
-                - target_price
-              properties:
-                title:
-                  type: string
-                symbol:
-                  type: string
-                session:
-                  type: string
-                htf_bias:
-                  type: string
-                entry_type:
-                  type: string
-                entry_price:
-                  type: number
-                stop_loss:
-                  type: number
-                target_price:
-                  type: number
-                order_type:
-                  type: string
-                note:
-                  type: string
-                  nullable: true
-                checklist:
-                  type: string
-                  nullable: true
-                news_events:
-                  type: string
-                  nullable: true
-                chart_url:
-                  type: string
-                  nullable: true
-      responses:
-        '200':
-          description: Journal entry created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-        '500':
-          description: Error while creating journal entry
+/journal-entry:
+  post:
+    operationId: postJournalEntry
+    summary: Create a journal entry in Notion
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - title
+              - symbol
+              - session
+              - htf_bias
+              - entry_type
+              - entry_price
+              - stop_loss
+              - target_price
+              - order_type
+            properties:
+              title:
+                type: string
+              symbol:
+                type: string
+              session:
+                type: string
+              htf_bias:
+                type: string
+              entry_type:
+                type: string
+              entry_price:
+                type: number
+              stop_loss:
+                type: number
+              target_price:
+                type: number
+              order_type:
+                type: string
+              status:         # 👈 New property
+                type: string
+              note:
+                type: string
+                nullable: true
+              checklist:
+                type: string
+                nullable: true
+              news_events:
+                type: string
+                nullable: true
+              chart_url:
+                type: string
+                nullable: true
+
 
   /open-positions:
     get:
@@ -528,4 +520,5 @@ paths:
                       nullable: true
                 News:
                   type: string
+
 
