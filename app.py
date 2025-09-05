@@ -210,7 +210,17 @@ async def journal_entry(entry: JournalEntry):
         }
 
         if entry.chart_url:
-            properties["Files & media"] = {"url": entry.chart_url}
+            properties["Files & media"] = {
+                "files": [
+                    {
+                        "name": "Chart",
+                        "external": {
+                            "url": entry.chart_url
+                        }
+                    }
+                ]
+            }
+
 
         notion.pages.create(parent={"database_id": NOTION_DB_ID}, properties=properties)
         return {"status": "success"}
