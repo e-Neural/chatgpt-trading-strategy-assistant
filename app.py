@@ -194,6 +194,7 @@ async def journal_entry(entry: JournalEntry):
 
         properties = {
             "Title": {"title": [{"text": {"content": entry.title}}]},
+            "Date": {"date": {"start": datetime.utcnow().isoformat()}},
             "Symbol": {"rich_text": [{"text": {"content": entry.symbol}}]},
             "Session": {"rich_text": [{"text": {"content": entry.session}}]},
             "HTF Bias": {"rich_text": [{"text": {"content": entry.htf_bias}}]},
