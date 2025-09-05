@@ -190,6 +190,7 @@ For each, specify:
 At bottom of analysis, suggest journal entry if setup found:
 POST `/journal-entry` with:
 * **Title**
+* **Date**
 * **Symbol**
 * **Session**
 * **HTF bias**
