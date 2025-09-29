@@ -3,24 +3,33 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel          # ←  put this line back
 from typing import Optional, Literal
 from notion_client import Client as NotionClient
-from ctrader_client import (
-    init_client,                       # still need this
+# from ctrader_client import (
+#     init_client,                       # still need this
+#     get_open_positions,
+#     get_ohlc_data,
+#     place_order,
+#     wait_for_deferred,
+#     symbol_name_to_id,
+#     client,
+# )
+
+from mt5_client import (
     get_open_positions,
     get_ohlc_data,
     place_order,
     wait_for_deferred,
     symbol_name_to_id,
-    client,
 )
+
 from twisted.internet import reactor
 import threading
-from ctrader_client import ACCOUNT_ID
+# from ctrader_client import ACCOUNT_ID
 import time
 from typing import List, Literal
 from datetime import datetime
 from typing import List
 from fastapi import  APIRouter
-from ctrader_client import is_forex_symbol
+# from ctrader_client import is_forex_symbol
 import os
 from dotenv import load_dotenv
 from collections import defaultdict
@@ -45,10 +54,11 @@ app = FastAPI()
 
 # 🔌 ─────────────────────────────────────────────────────────────
 @app.on_event("startup")
-async def start_ctrader():
+async def start_mt5():
     """Spin up the cTrader Open API client once per worker."""
-    if not reactor.running:                 # cheap guard
-        threading.Thread(target=init_client, daemon=True).start()
+    pass
+    # if not reactor.running:                 # cheap guard
+    #     threading.Thread(target=init_client, daemon=True).start()
 # 🔌 ─────────────────────────────────────────────────────────────
 
 
@@ -182,7 +192,7 @@ def wait_until_symbols_loaded(timeout=10):
 def health():
     return {
         "symbols_loaded": len(symbol_name_to_id),
-        "connected": client.connected
+        "connected": True #client.connected
     }
 
 # 📟 Notion Entry Endpoint
@@ -282,28 +292,17 @@ def execute_trade(order: PlaceOrderRequest):
         symbol_id = symbol_name_to_id[symbol_key]
 
         print(f"[ORDER DEBUG] Sending order: {order=}, {symbol_id=}")
-        
-        # 🔄 Normalize volume
-        # 🔄 Normalize volume
-        volume_raw = int(order.volume)  # assume raw units passed from frontend (e.g. 1 lot = 10_000_000 for Forex)
 
-
-
-        # Submit order
+        # Para MT5, volume já é em lotes (float)
         deferred = place_order(
-            client=client,
-            account_id=ACCOUNT_ID,
-            symbol_id=symbol_id,
+            symbol=symbol_id,
             order_type=order.order_type,
             side=order.direction,
-            volume=volume_raw,
+            volume=order.volume,
             price=order.entry_price if order.order_type != "MARKET" else None,
             stop_loss=order.stop_loss,
             take_profit=order.take_profit
         )
-
-
-
 
         result = wait_for_deferred(deferred, timeout=12)
 
@@ -325,16 +324,16 @@ def execute_trade(order: PlaceOrderRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.on_event("shutdown")
-async def stop_ctrader():
-    if reactor.running:
-        reactor.stop()
+async def stop_mt5():
+    import MetaTrader5 as mt5
+    mt5.shutdown()
 
 
 # 🔄 Pending Orders
 @app.get("/pending-orders")
 async def pending_orders():
     try:
-        from ctrader_client import get_pending_orders
+        from mt5_client import get_pending_orders
         return get_pending_orders()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
