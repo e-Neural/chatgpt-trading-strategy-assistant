@@ -435,12 +435,16 @@ async def analyze(req: AnalyzeRequest):
         # Detect macro + minor OB & CHOCH for checklist
         m15_ob_data = detect_order_block(candles["M15"], lookback=200, macro_threshold=100)
         m5_choch_data = detect_choch(candles["M5"], macro_threshold=100)
-
+        
         checklist = {
-            "Macro_CHOCH": m5_choch_data.get("macro") if m5_choch_data else None,
-            "Minor_CHOCH": m5_choch_data.get("minor") if m5_choch_data else None,
-            "Macro_OB": m15_ob_data.get("macro") if m15_ob_data else None,
-            "Minor_OB": m15_ob_data.get("minor") if m15_ob_data else None,
+            "CHOCH": {
+                "Macro": m5_choch_data.get("macro") if m5_choch_data else None,
+                "Minor": m5_choch_data.get("minor") if m5_choch_data else None,
+            },
+            "OB": {
+                "Macro": m15_ob_data.get("macro") if m15_ob_data else None,
+                "Minor": m15_ob_data.get("minor") if m15_ob_data else None,
+            },
             "FVG": detect_fvg(candles["M15"]),
             "Sweep": detect_sweep(tagged_m15, pdh, pdl, session_levels),
             "Candle": candle_dict,
