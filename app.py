@@ -232,8 +232,8 @@ async def journal_entry(entry: JournalEntry):
                 ]
             }
 
-
-        notion.pages.create(parent={"database_id": NOTION_DB_ID}, properties=properties)
+        # para salvar no Notion, descomente a linha abaixo apt
+        # notion.pages.create(parent={"database_id": NOTION_DB_ID}, properties=properties)
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

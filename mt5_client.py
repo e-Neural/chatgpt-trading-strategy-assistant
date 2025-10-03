@@ -180,6 +180,7 @@ def place_order(
         f"price={price} SL={stop_loss} TP={take_profit}"
     )
     result = mt5.order_send(request)
+    # print("[MT5 ORDER RESULT]", result)
     return result
 
 # ── amend helpers ──────────────────────────────────────────────────────────
